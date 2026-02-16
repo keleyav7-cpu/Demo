@@ -1,0 +1,595 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="theme-color" content="#0b0d12" />
+  <meta name="robots" content="noindex,nofollow" />
+  <title>L-Card</title>
+
+  <!-- Open Graph (vista bonita al compartir) -->
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="L-Card" />
+  <meta property="og:description" content="Tarjeta digital NFC + QR" />
+  <meta property="og:image" content="" />
+  <meta property="og:url" content="" />
+
+  <style>
+    :root{
+      --bg:#07080b;
+      --panel:#0b0d12;
+      --ink:#e9eef8;
+      --muted:#aab4c5;
+      --line:rgba(255,255,255,.10);
+      --shine:rgba(255,255,255,.06);
+      --accent:#8dd0ff;
+      --accent2:#b8a7ff;
+
+      --r:18px;
+      --shadow: 0 18px 60px rgba(0,0,0,.55);
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family:var(--sans);
+      color:var(--ink);
+      background:
+        radial-gradient(1200px 700px at 15% 10%, rgba(141,208,255,.16), transparent 55%),
+        radial-gradient(900px 600px at 85% 30%, rgba(184,167,255,.14), transparent 55%),
+        radial-gradient(700px 500px at 50% 95%, rgba(255,255,255,.06), transparent 55%),
+        var(--bg);
+    }
+
+    a{color:inherit; text-decoration:none}
+    .wrap{
+      min-height:100%;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:24px;
+    }
+    .card{
+      width:min(980px, 100%);
+      display:grid;
+      grid-template-columns: 1.15fr .85fr;
+      gap:18px;
+      padding:18px;
+      border:1px solid var(--line);
+      border-radius:calc(var(--r) + 8px);
+      background:linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
+      box-shadow: var(--shadow);
+      position:relative;
+      overflow:hidden;
+    }
+    .card:before{
+      content:"";
+      position:absolute; inset:-2px;
+      background:
+        radial-gradient(600px 240px at 20% 0%, rgba(141,208,255,.10), transparent 60%),
+        radial-gradient(520px 240px at 80% 0%, rgba(184,167,255,.10), transparent 60%);
+      pointer-events:none;
+      filter: blur(0.2px);
+    }
+
+    .left,.right{position:relative; z-index:1}
+    .left{
+      border:1px solid var(--line);
+      border-radius:var(--r);
+      background:rgba(11,13,18,.55);
+      padding:18px;
+    }
+    .right{
+      border:1px solid var(--line);
+      border-radius:var(--r);
+      background:rgba(11,13,18,.35);
+      padding:18px;
+      display:flex;
+      flex-direction:column;
+      gap:14px;
+    }
+
+    .top{
+      display:flex;
+      gap:14px;
+      align-items:center;
+    }
+    .avatar{
+      width:64px; height:64px;
+      border-radius:18px;
+      border:1px solid var(--line);
+      background:linear-gradient(135deg, rgba(141,208,255,.22), rgba(184,167,255,.18));
+      display:grid;
+      place-items:center;
+      font-family:var(--mono);
+      letter-spacing:.08em;
+      color:rgba(233,238,248,.95);
+      position:relative;
+      overflow:hidden;
+    }
+    .avatar img{
+      width:100%; height:100%;
+      object-fit:cover;
+      display:none;
+    }
+    .avatar .initials{font-weight:700}
+
+    .meta{min-width:0}
+    .name{
+      font-size:20px;
+      font-weight:760;
+      line-height:1.15;
+      margin:0;
+      letter-spacing:.02em;
+    }
+    .role{
+      margin:6px 0 0;
+      color:var(--muted);
+      font-size:14px;
+      line-height:1.35;
+    }
+
+    .chips{
+      margin-top:12px;
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+    }
+    .chip{
+      border:1px solid var(--line);
+      padding:6px 10px;
+      border-radius:999px;
+      color:rgba(233,238,248,.92);
+      font-size:12px;
+      background:rgba(255,255,255,.03);
+    }
+
+    .bio{
+      margin-top:14px;
+      padding-top:14px;
+      border-top:1px solid var(--line);
+      color:rgba(233,238,248,.92);
+      font-size:14px;
+      line-height:1.6;
+    }
+
+    .grid{
+      margin-top:14px;
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:10px;
+    }
+    .tile{
+      border:1px solid var(--line);
+      border-radius:14px;
+      padding:12px;
+      background:rgba(255,255,255,.03);
+    }
+    .tile .k{
+      font-size:12px;
+      color:var(--muted);
+      margin:0 0 6px;
+    }
+    .tile .v{
+      font-size:14px;
+      margin:0;
+      word-break:break-word;
+    }
+
+    .actions{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:10px;
+      margin-top:14px;
+    }
+    .btn{
+      border:1px solid var(--line);
+      border-radius:14px;
+      padding:12px 12px;
+      background:rgba(255,255,255,.03);
+      display:flex;
+      gap:10px;
+      align-items:center;
+      justify-content:center;
+      font-weight:650;
+      letter-spacing:.02em;
+      transition: transform .08s ease, background .15s ease, border-color .15s ease;
+      user-select:none;
+    }
+    .btn:hover{ transform: translateY(-1px); background:rgba(255,255,255,.06); border-color:rgba(255,255,255,.18); }
+    .btn:active{ transform: translateY(0px); }
+    .btn.small{ padding:10px 12px; font-size:13px; }
+
+    .icon{
+      width:18px; height:18px;
+      display:inline-block;
+      opacity:.9;
+    }
+
+    .qrbox{
+      border:1px solid var(--line);
+      border-radius:14px;
+      padding:14px;
+      background:rgba(255,255,255,.03);
+      display:flex;
+      gap:14px;
+      align-items:center;
+    }
+    #qr{
+      width:112px; height:112px;
+      border-radius:12px;
+      background:rgba(255,255,255,.06);
+      display:grid;
+      place-items:center;
+      overflow:hidden;
+      flex:0 0 auto;
+    }
+    .qrtext{
+      min-width:0;
+    }
+    .qrtext .t{
+      margin:0;
+      font-weight:750;
+      letter-spacing:.02em;
+    }
+    .qrtext .d{
+      margin:6px 0 0;
+      color:var(--muted);
+      font-size:13px;
+      line-height:1.45;
+    }
+
+    .foot{
+      margin-top:auto;
+      border-top:1px solid var(--line);
+      padding-top:12px;
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      color:var(--muted);
+      font-size:12px;
+    }
+    .tag{
+      font-family:var(--mono);
+      opacity:.95;
+    }
+
+    .notice{
+      border:1px dashed rgba(255,255,255,.22);
+      border-radius:14px;
+      padding:12px;
+      background:rgba(255,255,255,.03);
+      color:rgba(233,238,248,.88);
+      font-size:13px;
+      line-height:1.5;
+    }
+
+    @media (max-width: 820px){
+      .card{ grid-template-columns: 1fr; }
+      .actions{ grid-template-columns: 1fr; }
+      .grid{ grid-template-columns: 1fr; }
+      .avatar{ width:58px; height:58px; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <main class="card" aria-label="L-Card">
+      <section class="left">
+        <div class="top">
+          <div class="avatar" id="avatarBox" aria-label="Avatar">
+            <span class="initials" id="initials">LC</span>
+            <img id="avatarImg" alt="Foto de perfil" />
+          </div>
+          <div class="meta">
+            <h1 class="name" id="name">L-Card Demo</h1>
+            <p class="role" id="role">Tarjeta digital NFC + QR · Plantilla base</p>
+          </div>
+        </div>
+
+        <div class="chips" id="chips"></div>
+
+        <div class="bio" id="bio">
+          Esta es una plantilla de prueba para aprender el flujo completo: subdominio, página, NFC, QR y entrega.
+          Luego se transforma en B-Card con Estudio en B sin reescribir todo. La vida mejora cuando repites lo que funciona.
+        </div>
+
+        <div class="grid">
+          <div class="tile">
+            <p class="k">WhatsApp</p>
+            <p class="v" id="waTxt">Sin configurar</p>
+          </div>
+          <div class="tile">
+            <p class="k">Correo</p>
+            <p class="v" id="emailTxt">Sin configurar</p>
+          </div>
+          <div class="tile">
+            <p class="k">Ubicación</p>
+            <p class="v" id="locTxt">Opcional</p>
+          </div>
+          <div class="tile">
+            <p class="k">Sitio / Portafolio</p>
+            <p class="v" id="siteTxt">Opcional</p>
+          </div>
+        </div>
+
+        <div class="actions">
+          <a class="btn" id="btnWA" href="#" rel="noopener">
+            <span class="icon">💬</span>
+            <span>WhatsApp</span>
+          </a>
+          <a class="btn" id="btnCall" href="#" rel="noopener">
+            <span class="icon">📞</span>
+            <span>Llamar</span>
+          </a>
+          <a class="btn small" id="btnEmail" href="#" rel="noopener">
+            <span class="icon">✉️</span>
+            <span>Correo</span>
+          </a>
+          <button class="btn small" id="btnVcard" type="button">
+            <span class="icon">📇</span>
+            <span>Guardar contacto</span>
+          </button>
+        </div>
+      </section>
+
+      <aside class="right">
+        <div class="qrbox">
+          <div id="qr" aria-label="Código QR"></div>
+          <div class="qrtext">
+            <p class="t">Escanea o toca</p>
+            <p class="d" id="qrDesc">
+              El QR apunta a esta misma página. Útil cuando estás en computadora o quieres compartir sin NFC.
+            </p>
+          </div>
+        </div>
+
+        <div class="notice" id="notice">
+          <b>Modo sandbox (LÍMINE):</b> esto está marcado como <code>noindex</code> para que Google no lo liste.
+          Para versión pública, se cambia en 10 segundos.
+        </div>
+
+        <div class="actions" style="margin-top:0">
+          <a class="btn" id="btnIG" href="#" rel="noopener">
+            <span class="icon">📸</span>
+            <span>Instagram</span>
+          </a>
+          <a class="btn" id="btnMaps" href="#" rel="noopener">
+            <span class="icon">📍</span>
+            <span>Maps</span>
+          </a>
+          <a class="btn small" id="btnSite" href="#" rel="noopener">
+            <span class="icon">🔗</span>
+            <span>Ver sitio</span>
+          </a>
+          <button class="btn small" id="btnCopy" type="button">
+            <span class="icon">🧷</span>
+            <span>Copiar link</span>
+          </button>
+        </div>
+
+        <div class="foot">
+          <span class="tag" id="tag">limine.io / L-Card</span>
+          <span id="stamp">v1</span>
+        </div>
+      </aside>
+    </main>
+  </div>
+
+  <!-- QR library (ligera) -->
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js" integrity="sha256-7Fq+X0egH2jBqVqv0iB6t0lHfOqH1T1ukw7d1W0e9Dk=" crossorigin="anonymous"></script>
+
+  <script>
+    /**
+     * ==========================
+     *  CONFIG (EDITA AQUÍ)
+     * ==========================
+     * Sugerencia: crea una copia por cliente (o por L-Card) y solo cambias este bloque.
+     */
+    const CONFIG = {
+      pageTitle: "L-Card · Demo",
+      ogTitle: "L-Card",
+      ogDescription: "Tarjeta digital NFC + QR",
+      ogImage: "", // pon una URL si quieres vista bonita al compartir
+
+      name: "L-Card Demo",
+      role: "Tarjeta digital NFC + QR · Plantilla base",
+      avatarImage: "", // URL (opcional). Ej: "https://tusitio.com/foto.jpg"
+
+      chips: ["NFC", "QR", "Mini-web", "Sandbox"],
+      bio: "Plantilla de prueba para aprender el flujo completo: subdominio, página, NFC, QR y entrega. Luego se convierte en B-Card sin reescribir todo.",
+
+      phoneE164: "",   // Ej: "+525512345678" (para llamadas)
+      whatsappE164: "",// Ej: "+525512345678" (para wa.me)
+      email: "",       // Ej: "hola@correo.com"
+      locationText: "Opcional",
+      website: "",     // Ej: "https://estudioenb.com"
+      instagram: "",   // Ej: "estudioenb" (sin @)
+      mapsUrl: "",     // Ej: link de Google Maps
+
+      vcard: {
+        org: "LÍMINE",
+        title: "Contacto",
+        note: "L-Card (sandbox)",
+      },
+
+      footerTag: "limine.io / L-Card",
+      version: "v1"
+    };
+
+    /**
+     * ==========================
+     *  OVERRIDES POR URL (opcional)
+     * ==========================
+     * Puedes crear links tipo:
+     *  https://demo.limine.io/?n=Kevin%20Cruz&r=Dise%C3%B1o&wa=+5255...&ig=estudioenb
+     * Para no duplicar tanto.
+     */
+    const params = new URLSearchParams(location.search);
+    const pick = (k) => params.get(k)?.trim() || "";
+
+    if (pick("n")) CONFIG.name = pick("n");
+    if (pick("r")) CONFIG.role = pick("r");
+    if (pick("bio")) CONFIG.bio = pick("bio");
+    if (pick("wa")) CONFIG.whatsappE164 = pick("wa");
+    if (pick("p")) CONFIG.phoneE164 = pick("p");
+    if (pick("e")) CONFIG.email = pick("e");
+    if (pick("ig")) CONFIG.instagram = pick("ig");
+    if (pick("w")) CONFIG.website = pick("w");
+
+    // Helpers
+    const cleanPhone = (s) => (s || "").replace(/[^\d+]/g,"");
+    const waLink = (e164) => {
+      const p = cleanPhone(e164).replace("+","");
+      return p ? `https://wa.me/${p}` : "";
+    };
+    const telLink = (e164) => {
+      const p = cleanPhone(e164);
+      return p ? `tel:${p}` : "";
+    };
+    const mailLink = (email) => email ? `mailto:${email}` : "";
+
+    // Apply config to DOM
+    document.title = CONFIG.pageTitle || "L-Card";
+
+    const setMeta = (sel, val) => {
+      const el = document.querySelector(sel);
+      if (!el || !val) return;
+      el.setAttribute("content", val);
+    };
+
+    setMeta('meta[property="og:title"]', CONFIG.ogTitle);
+    setMeta('meta[property="og:description"]', CONFIG.ogDescription);
+    setMeta('meta[property="og:image"]', CONFIG.ogImage);
+    setMeta('meta[property="og:url"]', location.href);
+
+    document.getElementById("name").textContent = CONFIG.name;
+    document.getElementById("role").textContent = CONFIG.role;
+    document.getElementById("bio").textContent = CONFIG.bio;
+    document.getElementById("tag").textContent = CONFIG.footerTag;
+    document.getElementById("stamp").textContent = CONFIG.version;
+
+    // Avatar
+    const initials = (CONFIG.name || "L-Card").split(" ").filter(Boolean).slice(0,2).map(s=>s[0].toUpperCase()).join("");
+    document.getElementById("initials").textContent = initials || "LC";
+    if (CONFIG.avatarImage) {
+      const img = document.getElementById("avatarImg");
+      img.src = CONFIG.avatarImage;
+      img.onload = () => { img.style.display = "block"; document.getElementById("initials").style.display = "none"; };
+    }
+
+    // Chips
+    const chipsBox = document.getElementById("chips");
+    chipsBox.innerHTML = "";
+    (CONFIG.chips || []).forEach(t=>{
+      const span = document.createElement("span");
+      span.className = "chip";
+      span.textContent = t;
+      chipsBox.appendChild(span);
+    });
+
+    // Info tiles
+    document.getElementById("waTxt").textContent = CONFIG.whatsappE164 ? cleanPhone(CONFIG.whatsappE164) : "Sin configurar";
+    document.getElementById("emailTxt").textContent = CONFIG.email || "Sin configurar";
+    document.getElementById("locTxt").textContent = CONFIG.locationText || "Opcional";
+    document.getElementById("siteTxt").textContent = CONFIG.website || "Opcional";
+
+    // Buttons
+    const btnWA = document.getElementById("btnWA");
+    const btnCall = document.getElementById("btnCall");
+    const btnEmail = document.getElementById("btnEmail");
+    const btnIG = document.getElementById("btnIG");
+    const btnMaps = document.getElementById("btnMaps");
+    const btnSite = document.getElementById("btnSite");
+
+    const setBtn = (btn, href, fallbackText="No disponible") => {
+      if (href) {
+        btn.href = href;
+        btn.style.opacity = "1";
+        btn.style.pointerEvents = "auto";
+      } else {
+        btn.href = "#";
+        btn.style.opacity = ".45";
+        btn.style.pointerEvents = "none";
+        btn.title = fallbackText;
+      }
+    };
+
+    setBtn(btnWA, waLink(CONFIG.whatsappE164), "Configura WhatsApp");
+    setBtn(btnCall, telLink(CONFIG.phoneE164), "Configura teléfono");
+    setBtn(btnEmail, mailLink(CONFIG.email), "Configura correo");
+    setBtn(btnIG, CONFIG.instagram ? `https://instagram.com/${CONFIG.instagram.replace("@","")}` : "", "Configura Instagram");
+    setBtn(btnMaps, CONFIG.mapsUrl || "", "Configura Maps");
+    setBtn(btnSite, CONFIG.website || "", "Configura sitio");
+
+    // Copy link
+    document.getElementById("btnCopy").addEventListener("click", async () => {
+      try{
+        await navigator.clipboard.writeText(location.href);
+        const b = document.getElementById("btnCopy");
+        const old = b.innerHTML;
+        b.innerHTML = '<span class="icon">✅</span><span>Copiado</span>';
+        setTimeout(()=> b.innerHTML = old, 1200);
+      }catch(e){
+        alert("No se pudo copiar. Copia manualmente el enlace.");
+      }
+    });
+
+    // vCard generator
+    function buildVCard() {
+      const n = CONFIG.name || "";
+      const org = CONFIG.vcard?.org || "";
+      const title = CONFIG.vcard?.title || "";
+      const note = CONFIG.vcard?.note || "";
+      const email = CONFIG.email || "";
+      const tel = cleanPhone(CONFIG.phoneE164 || CONFIG.whatsappE164 || "");
+      const url = CONFIG.website || location.href;
+
+      // vCard 3.0 (compatible)
+      const lines = [
+        "BEGIN:VCARD",
+        "VERSION:3.0",
+        `FN:${escapeV(n)}`,
+        org ? `ORG:${escapeV(org)}` : "",
+        title ? `TITLE:${escapeV(title)}` : "",
+        tel ? `TEL;TYPE=CELL:${escapeV(tel)}` : "",
+        email ? `EMAIL;TYPE=INTERNET:${escapeV(email)}` : "",
+        url ? `URL:${escapeV(url)}` : "",
+        note ? `NOTE:${escapeV(note)}` : "",
+        "END:VCARD"
+      ].filter(Boolean);
+
+      return lines.join("\r\n");
+    }
+    function escapeV(s){ return String(s).replace(/\n/g," ").replace(/,/g,"\\,").replace(/;/g,"\\;"); }
+
+    document.getElementById("btnVcard").addEventListener("click", () => {
+      const vcf = buildVCard();
+      const blob = new Blob([vcf], {type:"text/vcard;charset=utf-8"});
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `${(CONFIG.name || "contacto").replace(/\s+/g,"_")}.vcf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(()=>URL.revokeObjectURL(a.href), 1500);
+    });
+
+    // QR (apunta a esta misma página)
+    const qrEl = document.getElementById("qr");
+    const qrText = location.href;
+    QRCode.toCanvas(qrText, { margin: 1, width: 112 }, (err, canvas) => {
+      if (err) {
+        qrEl.textContent = "QR no disponible";
+        return;
+      }
+      qrEl.innerHTML = "";
+      qrEl.appendChild(canvas);
+    });
+  </script>
+</body>
+</html>
